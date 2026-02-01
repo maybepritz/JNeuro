@@ -96,7 +96,7 @@ public class DenseLayer extends Layer {
         }
 
         // Ошибка для предыдущего слоя
-        return weights.transpose().multiply(error);
+        return weights.transpose().multiply(grad);
     }
 
     // Геттеры:
