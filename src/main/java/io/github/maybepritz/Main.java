@@ -174,8 +174,14 @@ public class Main {
 
     private static void downloadFile(String urlStr, Path dest) throws IOException {
         URL url = new URL(urlStr);
-        try (InputStream in = url.openStream()) {
-            Files.copy(in, dest, StandardCopyOption.REPLACE_EXISTING);
+        try (InputStream in = new BufferedInputStream(url.openStream());
+             OutputStream out = new BufferedOutputStream(Files.newOutputStream(dest, 
+                     StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))) {
+            byte[] buffer = new byte[8192];
+            int bytesRead;
+            while ((bytesRead = in.read(buffer)) != -1) {
+                out.write(buffer, 0, bytesRead);
+            }
         }
     }
 
