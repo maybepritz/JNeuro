@@ -28,6 +28,8 @@ public class TrainingConfig {
     /** Доля данных для валидации (0.0 = без валидации) */
     private double validationSplit = 0.0;
 
+    private int numThreads = 0;
+
     public int getEpochs() {return this.epochs;}
     public int getBatchSize() {return this.batchSize;}
     public boolean isShuffle() {return this.shuffle;}
@@ -37,6 +39,7 @@ public class TrainingConfig {
     public int getLogInterval() {return this.logInterval;}
     public boolean isVerbose() {return this.verbose;}
     public double getValidationSplit() {return this.validationSplit;}
+    public int getNumThreads() { return this.numThreads;}
 
     /**
      * @param epochs количество проходов по датасету
@@ -105,6 +108,10 @@ public class TrainingConfig {
             throw new IllegalArgumentException("Validation split должен быть в диапазоне [0, 1)");
         }
         this.validationSplit = split;
+    }
+
+    public void setNumThreads(int numThreads) {
+        this.numThreads = numThreads;
     }
 
 }

@@ -30,41 +30,39 @@ public class AdamOptimizer implements Optimizer {
     public Matrix update(Matrix weights, Matrix gradient, String layerId) {
         // Инициализация состояния если нужно
         if (!m.containsKey(layerId)) {
-            m.put(layerId, weights.copy().scale(0)); // нули той же размерности
+            m.put(layerId, weights.copy().scale(0));
             v.put(layerId, weights.copy().scale(0));
             t.put(layerId, 0);
         }
 
-        // Увеличиваем счётчик
         int timestep = t.get(layerId) + 1;
         t.put(layerId, timestep);
 
-        // Получаем текущее состояние
         Matrix mCurrent = m.get(layerId);
         Matrix vCurrent = v.get(layerId);
 
-        // Обновляем моменты
-        // m = beta1 * m + (1 - beta1) * gradient
-        Matrix mNew = mCurrent.scale(beta1).add(gradient.scale(1 - beta1));
+        // ✅ Используем copy() чтобы не мутировать состояние и градиент
+        Matrix mNew = mCurrent.copy().scale(beta1)
+                .add(gradient.copy().scale(1 - beta1));
 
-        // v = beta2 * v + (1 - beta2) * gradient²
         Matrix gradientSquared = gradient.elementMultiply(gradient);
-        Matrix vNew = vCurrent.scale(beta2).add(gradientSquared.scale(1 - beta2));
+        Matrix vNew = vCurrent.copy().scale(beta2)
+                .add(gradientSquared.scale(1 - beta2));
 
         // Коррекция смещения
-        double beta1Pow = Math.pow(beta1, timestep);
-        double beta2Pow = Math.pow(beta2, timestep);
+        double beta1Correction = 1.0 / (1.0 - Math.pow(beta1, timestep));
+        double beta2Correction = 1.0 / (1.0 - Math.pow(beta2, timestep));
 
-        Matrix mHat = mNew.scale(1.0 / (1.0 - beta1Pow));
-        Matrix vHat = vNew.scale(1.0 / (1.0 - beta2Pow));
+        Matrix mHat = mNew.copy().scale(beta1Correction);
+        Matrix vHat = vNew.copy().scale(beta2Correction);
 
-        // Обновление весов
-        // weights = weights - lr * mHat / (sqrt(vHat) + epsilon)
-        Matrix vHatSqrt = vHat.map(x -> Math.sqrt(x) + epsilon);
-        Matrix update = mHat.elementMultiply(vHatSqrt.map(x -> 1.0 / x));
-        Matrix newWeights = weights.subtract(update.scale(learningRate));
+        // ✅ Более эффективно: объединить sqrt и деление
+        Matrix update = mHat.elementMultiply(
+                vHat.map(x -> 1.0 / (Math.sqrt(x) + epsilon))
+        );
 
-        // Сохраняем состояние
+        Matrix newWeights = weights.copy().subtract(update.scale(learningRate));
+
         m.put(layerId, mNew);
         v.put(layerId, vNew);
 

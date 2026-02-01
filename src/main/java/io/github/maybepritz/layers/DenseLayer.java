@@ -95,8 +95,7 @@ public class DenseLayer extends Layer {
             bias = config.getOptimizer().update(bias, grad, layerId + "_bias");
         }
 
-        // Ошибка для предыдущего слоя
-        return weights.transpose().multiply(error);
+        return weights.transpose().multiply(grad);
     }
 
     // Геттеры:
