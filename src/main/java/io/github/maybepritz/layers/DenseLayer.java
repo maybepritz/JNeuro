@@ -62,42 +62,41 @@ public class DenseLayer extends Layer {
 
     @Override
     public Matrix getGradient(Matrix error, NetworkConfig config) {
+        // Вычисляем ЧИСТЫЙ градиент (без умножения на learning rate!)
         Matrix grad = output.map(activation::derivative);
         grad = grad.elementMultiply(error);
-        grad = grad.scale(config.getLearningRate());
+
+        // Клиппинг градиента (опционально)
         if (config.getGradientClip() > 0) {
             grad.clip(-config.getGradientClip(), config.getGradientClip());
         }
+
         return grad;
     }
 
     @Override
     public Matrix backpropagate(Matrix error, Matrix grad, NetworkConfig config) {
-        Matrix inputT = input.transpose();
-        Matrix weightsDelta = grad.multiply(inputT);
+        // Градиент по весам: dL/dW = grad * input^T
+        Matrix weightGradient = grad.multiply(input.transpose());
 
-        // L2 регуляризация
+        // L2 регуляризация (добавляем к градиенту)
         if (config.getL2Regularization() > 0) {
-            Matrix l2Penalty = weights.copy();
-            l2Penalty = l2Penalty.scale(config.getL2Regularization() * config.getLearningRate());
-            weightsDelta = weightsDelta.subtract(l2Penalty);
+            weightGradient = weightGradient.add(
+                    weights.scale(config.getL2Regularization())
+            );
         }
 
-        double clipValue = 5.0;
-        for (int i = 0; i < weightsDelta.getRows(); i++) {
-            for (int j = 0; j < weightsDelta.getCols(); j++) {
-                double val = weightsDelta.get(i, j);
-                if (Double.isNaN(val)) val = 0;
-                val = Math.max(-clipValue, Math.min(clipValue, val));
-                weightsDelta.set(i, j, val);
-            }
+        // Обновление через оптимизатор (оптимизатор сам применит learning rate!)
+        String layerId = "layer_" + System.identityHashCode(this);
+        weights = config.getOptimizer().update(weights, weightGradient, layerId);
+
+        // Bias
+        if (useBias) {
+            bias = config.getOptimizer().update(bias, grad, layerId + "_bias");
         }
 
-        weights = weights.add(weightsDelta);
-        if (useBias) bias = bias.add(grad);
-
-        Matrix transposedWeights = weights.transpose();
-        return transposedWeights.multiply(error);
+        // Ошибка для предыдущего слоя
+        return weights.transpose().multiply(error);
     }
 
     // Геттеры:

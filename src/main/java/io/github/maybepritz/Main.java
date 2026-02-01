@@ -49,11 +49,12 @@ public class Main {
 
         // ========= 2. Конфигурация сети =========
         NetworkConfig netConfig = new NetworkConfig();
-        netConfig.setLearningRate(0.001);  // Уменьшил! Было 0.01
         netConfig.setDropoutRate(0.0);
-        netConfig.setL2Regularization(0.0);  // Убрал регуляризацию
-        netConfig.setWeightInit(NetworkConfig.WeightInit.XAVIER);  // XAVIER вместо HE
-        netConfig.setGradientClip(1.0);  // Добавь клиппинг градиентов
+        netConfig.setL2Regularization(0.0);
+        netConfig.setWeightInit(NetworkConfig.WeightInit.HE);  // HE для ReLU
+        netConfig.setGradientClip(5.0);
+
+        netConfig.useAdam(0.001);
 
         MatrixFactory.setBackend(MatrixFactory.Backend.CPU);
 
@@ -66,13 +67,14 @@ public class Main {
         nn.addLayer(new SoftmaxLayer());
 
         System.out.println("Архитектура: 784 → 128 (ReLU) → 64 (ReLU) → 10 (Softmax)");
+        System.out.println("Оптимизатор: Adam (lr=0.001, β1=0.9, β2=0.999)");
         System.out.println();
 
         // ========= 4. Конфигурация обучения =========
         TrainingConfig trainConfig = new TrainingConfig();
-        trainConfig.setEpochs(100);
-        trainConfig.setBatchSize(32);
-        trainConfig.setLogInterval(10);
+        trainConfig.setEpochs(10);  // Уменьшил до 10 для теста
+        trainConfig.setBatchSize(128);  // Увеличил батч
+        trainConfig.setLogInterval(1);
         trainConfig.setShuffle(true);
         trainConfig.setVerbose(true);
         trainConfig.setEarlyStopping(false);

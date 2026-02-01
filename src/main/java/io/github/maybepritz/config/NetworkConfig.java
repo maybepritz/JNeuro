@@ -1,5 +1,7 @@
 package io.github.maybepritz.config;
 
+import io.github.maybepritz.optimizers.*;
+
 public class NetworkConfig {
     public enum WeightInit{
         /** Случайные значения в диапазоне [-1, 1] */
@@ -30,12 +32,23 @@ public class NetworkConfig {
     /** Seed для генератора случайных чисел — для воспроизводимости результатов */
     private Long seed = null;
 
+    /** Оптимизатор для обновления весов */
+    private Optimizer optimizer = null;
+
     public double getLearningRate() {return this.learningRate;}
     public double getL2Regularization() {return this.l2Regularization;}
     public double getDropoutRate() {return this.dropoutRate;}
     public WeightInit getWeightInit() {return this.weightInit;}
     public double getGradientClip() {return this.gradientClip;}
     public Long getSeed() {return this.seed;}
+
+    public Optimizer getOptimizer() {
+        // Если не задан, используем SGD по умолчанию
+        if (optimizer == null) {
+            optimizer = new SGDOptimizer(learningRate);
+        }
+        return optimizer;
+    }
 
     /**
      * @param learningRate скорость обучения (рекомендуется 0.001 - 0.1)
@@ -71,7 +84,7 @@ public class NetworkConfig {
     }
 
     /**
-     * @param clip максимальное абсолютное значение градиента (рекомендуется 1.0 - 5.0)
+     * @param clip максимальное а��солютное значение градиента (рекомендуется 1.0 - 5.0)
      */
     public void setGradientClip(double clip) {
         if(clip < 0)
@@ -84,5 +97,55 @@ public class NetworkConfig {
      */
     public void setSeed(Long seed){
         this.seed = seed;
+    }
+
+    public void setOptimizer(Optimizer optimizer) {
+        this.optimizer = optimizer;
+    }
+
+    // === Convenience методы для быстрой настройки оптимизатора ===
+
+    /**
+     * Использовать Adam оптимизатор (рекомендуется для большинства задач)
+     * @param lr learning rate
+     */
+    public void useAdam(double lr) {
+        this.learningRate = lr;
+        this.optimizer = new AdamOptimizer(lr);
+    }
+
+    /**
+     * Использовать Adam с параметрами по умолчанию
+     */
+    public void useAdam() {
+        useAdam(0.001);
+    }
+
+    /**
+     * Использовать SGD оптимизатор
+     * @param lr learning rate
+     */
+    public void useSGD(double lr) {
+        this.learningRate = lr;
+        this.optimizer = new SGDOptimizer(lr);
+    }
+
+    /**
+     * Использовать SGD с Momentum
+     * @param lr learning rate
+     * @param momentum коэффициент момента (обычно 0.9)
+     */
+    public void useMomentum(double lr, double momentum) {
+        this.learningRate = lr;
+        this.optimizer = new MomentumOptimizer(lr, momentum);
+    }
+
+    /**
+     * Использовать RMSprop оптимизатор
+     * @param lr learning rate
+     */
+    public void useRMSprop(double lr) {
+        this.learningRate = lr;
+        this.optimizer = new RMSpropOptimizer(lr);
     }
 }
