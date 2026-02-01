@@ -51,6 +51,7 @@ public class DenseLayer extends Layer {
         this.preActivation = z;  // Сохраняем для backprop
         this.output = z.map(activation::activate);
 
+        // Dropout: только если 0 < dropoutRate < 1.0 (избегаем деления на 0)
         if (training && dropoutRate > 0 && dropoutRate < 1.0) {
             dropoutMask = Matrix.randomMask(output.getRows(), output.getCols(), 1 - dropoutRate);
             output = output.elementMultiply(dropoutMask);
