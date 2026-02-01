@@ -13,6 +13,7 @@ public class DenseLayer extends Layer {
     private final boolean useBias;
     private final double dropoutRate;
     private Matrix dropoutMask;
+    private Matrix preActivation;
 
     public DenseLayer(LayerConfig config, NetworkConfig netConfig) {
         int inputSize = config.getInputSize();
@@ -47,9 +48,11 @@ public class DenseLayer extends Layer {
             z.addColumn(bias);
         }
 
+        this.preActivation = z;  // Сохраняем для backprop
         this.output = z.map(activation::activate);
 
-        if (training && dropoutRate > 0) {
+        // Dropout: только если 0 < dropoutRate < 1.0 (избегаем деления на 0)
+        if (training && dropoutRate > 0 && dropoutRate < 1.0) {
             dropoutMask = Matrix.randomMask(output.getRows(), output.getCols(), 1 - dropoutRate);
             output = output.elementMultiply(dropoutMask);
             output = output.scale(1.0 / (1 - dropoutRate));
@@ -63,7 +66,8 @@ public class DenseLayer extends Layer {
     @Override
     public Matrix getGradient(Matrix error, NetworkConfig config) {
         // Вычисляем ЧИСТЫЙ градиент (без умножения на learning rate!)
-        Matrix grad = output.map(activation::derivative);
+        // Используем preActivation вместо output для производной
+        Matrix grad = preActivation.map(activation::derivative);
         grad = grad.elementMultiply(error);
 
         // Клиппинг градиента (опционально)
@@ -86,6 +90,9 @@ public class DenseLayer extends Layer {
             );
         }
 
+        // Сначала вычисляем ошибку для предыдущего слоя (ДО обновления весов!)
+        Matrix errorForPrevLayer = weights.transpose().multiply(grad);
+
         // Обновление через оптимизатор (оптимизатор сам применит learning rate!)
         String layerId = "layer_" + System.identityHashCode(this);
         weights = config.getOptimizer().update(weights, weightGradient, layerId);
@@ -95,7 +102,7 @@ public class DenseLayer extends Layer {
             bias = config.getOptimizer().update(bias, grad, layerId + "_bias");
         }
 
-        return weights.transpose().multiply(grad);
+        return errorForPrevLayer;
     }
 
     // Геттеры:

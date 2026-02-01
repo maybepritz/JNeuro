@@ -1,8 +1,9 @@
 package io.github.maybepritz.optimizers;
 
 import io.github.maybepritz.utils.Matrix;
-import java.util.HashMap;
+import io.github.maybepritz.utils.MatrixFactory;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class AdamOptimizer implements Optimizer {
     private final double learningRate;
@@ -11,9 +12,9 @@ public class AdamOptimizer implements Optimizer {
     private final double epsilon; // обычно 1e-8
 
     // Состояние для каждого слоя
-    private final Map<String, Matrix> m = new HashMap<>(); // момент 1-го порядка
-    private final Map<String, Matrix> v = new HashMap<>(); // момент 2-го порядка
-    private final Map<String, Integer> t = new HashMap<>(); // счётчик обновлений
+    private final Map<String, Matrix> m = new ConcurrentHashMap<>(); // момент 1-го порядка
+    private final Map<String, Matrix> v = new ConcurrentHashMap<>(); // момент 2-го порядка
+    private final Map<String, Integer> t = new ConcurrentHashMap<>(); // счётчик обновлений
 
     public AdamOptimizer(double learningRate) {
         this(learningRate, 0.9, 0.999, 1e-8);
@@ -30,8 +31,8 @@ public class AdamOptimizer implements Optimizer {
     public Matrix update(Matrix weights, Matrix gradient, String layerId) {
         // Инициализация состояния если нужно
         if (!m.containsKey(layerId)) {
-            m.put(layerId, weights.copy().scale(0));
-            v.put(layerId, weights.copy().scale(0));
+            m.put(layerId, MatrixFactory.create(weights.getRows(), weights.getCols()));
+            v.put(layerId, MatrixFactory.create(weights.getRows(), weights.getCols()));
             t.put(layerId, 0);
         }
 
