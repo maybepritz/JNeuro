@@ -1,6 +1,5 @@
 package io.github.maybepritz;
 
-import io.github.maybepritz.activations.ReLU;
 import io.github.maybepritz.activations.Sigmoid;
 import io.github.maybepritz.activations.Tanh;
 import io.github.maybepritz.config.LayerConfig;
@@ -100,8 +99,6 @@ public class Main {
         // ========= 5. ASCII график =========
         System.out.println("\n=== ASCII График ===");
         printGraph(nn);
-
-//        trainer.shutdown();
     }
 
     private static void shuffleData(double[][] X, double[][] Y, Random rand) {
