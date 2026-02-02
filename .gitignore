@@ -34,7 +34,7 @@ build/
 
 .mvn
 
-mnist_data
+data
 
 ### VS Code ###
 .vscode/

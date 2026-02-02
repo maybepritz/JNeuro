@@ -55,7 +55,7 @@ public class NeuralNetwork {
     }
 
     private void backpropagate(Matrix target, Matrix output) {
-        Matrix error = target.subtract(output);
+        Matrix error = output.subtract(target);
         for (int i = layers.size() - 1; i >= 0; i--) {
             Layer layer = layers.get(i);
 

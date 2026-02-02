@@ -8,6 +8,7 @@ public class Sigmoid implements ActivationFunction{
 
     @Override
     public double derivative(double x){
-        return x * (1.0 - x);
+        double sig = activate(x);
+        return sig * (1.0 - sig);
     }
 }
